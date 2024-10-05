@@ -1,0 +1,22 @@
+[package]
+name = "udp-multicast-publisher"
+version.workspace = true
+edition.workspace = true
+description.workspace = true
+repository.workspace = true
+keywords.workspace = true
+categories.workspace = true
+license.workspace = true
+readme = "README.md"
+
+[dependencies]
+udp-data-pipeline = { workspace = true }
+
+[dev-dependencies]
+
+
+[features]
+
+# [[bench]]
+
+# [[example]]

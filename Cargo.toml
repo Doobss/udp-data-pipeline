@@ -1,0 +1,25 @@
+[workspace]
+members = [
+    "udp-data-pipeline-core",
+    "udp-multicast-publisher",
+    "udp-multicast-subscriber",
+]
+exclude = []
+resolver = "2"
+
+[workspace.package]
+# name = "udp-data-pipline"
+version = "0.1.0"
+edition = "2021"
+description = ""
+repository = ""
+keywords = []
+categories = []
+license = ""
+readme = "README.md"
+
+[workspace.dependencies]
+udp-data-pipeline = { path = "./udp-data-pipeline-core", package = "udp-data-pipeline-core" }
+udp-multicast-publisher = { path = "./udp-multicast-publisher" }
+udp-multicast-subscriber = { path = "./udp-multicast-subscriber" }
+openssl = { version = "*", features = ["vendored"] }
