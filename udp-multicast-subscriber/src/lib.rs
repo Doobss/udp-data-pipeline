@@ -1,14 +1,9 @@
-pub fn add(left: u64, right: u64) -> u64 {
-    left + right
-}
+extern crate socket2;
+extern crate thiserror;
+extern crate tokio;
+extern crate tracing;
+extern crate tracing_subscriber;
 
-#[cfg(test)]
-mod tests {
-    use super::*;
+mod error;
 
-    #[test]
-    fn it_works() {
-        let result = add(2, 2);
-        assert_eq!(result, 4);
-    }
-}
+pub use error::*;

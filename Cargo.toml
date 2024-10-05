@@ -19,6 +19,12 @@ license = ""
 readme = "README.md"
 
 [workspace.dependencies]
+argh = { version = "0.1.12" }
+thiserror = { version = "1.0.64" }
+tokio = { version = "1", features = ["full"] }
+tracing = { version = "0.1.40" }
+tracing-subscriber = { version = "0.3.18", features = ["env-filter"] }
+socket2 = { version = "0.5.7" }
 udp-data-pipeline = { path = "./udp-data-pipeline-core", package = "udp-data-pipeline-core" }
 udp-multicast-publisher = { path = "./udp-multicast-publisher" }
 udp-multicast-subscriber = { path = "./udp-multicast-subscriber" }

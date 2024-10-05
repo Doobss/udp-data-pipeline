@@ -10,7 +10,13 @@ license.workspace = true
 readme = "README.md"
 
 [dependencies]
+argh = { workspace = true }
 udp-data-pipeline = { workspace = true }
+thiserror = { workspace = true }
+tokio = { workspace = true }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+socket2 = { workspace = true }
 
 [dev-dependencies]
 
