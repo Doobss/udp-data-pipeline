@@ -5,4 +5,3 @@ extern crate tokio;
 mod error;
 
 pub use error::*;
-pub mod publisher;

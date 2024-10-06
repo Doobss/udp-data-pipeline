@@ -1,13 +1,9 @@
-use udp_data_pipeline::logging;
-use udp_data_pipeline::socket;
+use udp_data_pipeline::{logging, socket, MULTICAST_ADDR};
 use udp_multicast_publisher::PublisherResult;
 
 use std::net::{Ipv4Addr, SocketAddr};
 
-const MULTICAST_ADDR: Ipv4Addr = Ipv4Addr::new(224, 0, 0, 1);
-// pub static ref IPV4: IpAddr = Ipv4Addr::new(224, 0, 0, 123).into();
-// pub static ref IPV6: IpAddr = Ipv6Addr::new(0xFF02, 0, 0, 0, 0, 0, 0, 0x0123).into();
-const MULTICAST_PORT: u16 = 7645;
+const MULTICAST_PORT: u16 = 1900;
 
 /// Networking options.
 #[derive(argh::FromArgs)]
@@ -34,13 +30,13 @@ async fn main() -> PublisherResult<()> {
     );
     let publisher_socket = socket::multicast::new_publisher(&multicast_address)?;
 
-    // let socket = tokio::net::UdpSocket::from_std(publisher_socket)?;
+    let publisher_socket = tokio::net::UdpSocket::from_std(publisher_socket)?;
     // let buffer = [0; 1024];
     let mut len = 18;
-    let message = b"Hello from client!";
+    let message = b"Hello from publisher!";
     loop {
         tracing::info!("sending {len} bytes to {:?}", multicast_address);
-        len = publisher_socket.send_to(message, multicast_address)?;
+        len = publisher_socket.send_to(message, multicast_address).await?;
         tokio::time::sleep(tokio::time::Duration::from_millis(1000)).await
     }
 

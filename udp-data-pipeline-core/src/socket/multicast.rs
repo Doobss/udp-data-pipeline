@@ -2,7 +2,6 @@ use std::{io, net::SocketAddr};
 
 use socket2::{Domain, Protocol, SockAddr, Socket, Type};
 
-// this will be common for all our sockets
 pub fn new_socket(address: &SocketAddr) -> io::Result<Socket> {
     let domain = if address.is_ipv4() {
         Domain::IPV4
@@ -12,8 +11,6 @@ pub fn new_socket(address: &SocketAddr) -> io::Result<Socket> {
 
     let socket = Socket::new(domain, Type::DGRAM, Some(Protocol::UDP))?;
 
-    // socket.set_nonblocking(false)?;
-    // we're going to use read timeouts so that we don't hang waiting for packets
     socket.set_read_timeout(Some(std::time::Duration::from_millis(100)))?;
 
     Ok(socket)
@@ -28,7 +25,7 @@ pub fn new_subscriber(address: SocketAddr) -> io::Result<std::net::UdpSocket> {
     match ip_address {
         std::net::IpAddr::V4(ref mdns_v4) => {
             tracing::debug!("new_subscriber: join_multicast_v4 mdns_v4: {:?}", &mdns_v4);
-            socket.join_multicast_v4(mdns_v4, &std::net::Ipv4Addr::new(0, 0, 0, 0))?;
+            socket.join_multicast_v4(mdns_v4, &std::net::Ipv4Addr::UNSPECIFIED)?;
         }
         std::net::IpAddr::V6(ref mdns_v6) => {
             tracing::debug!("new_subscriber: join_multicast_v6 mdns_v6: {:?}", &mdns_v6);
@@ -75,7 +72,7 @@ fn bind_multicast(socket: &Socket, addr: &SocketAddr) -> io::Result<()> {
     socket.bind(&socket2::SockAddr::from(addr))
 }
 
-/// On unixes we bind to the multicast address, which causes multicast packets to be filtered
+/// On unix we bind to the multicast address, which causes multicast packets to be filtered
 #[cfg(unix)]
 fn bind_multicast(socket: &Socket, addr: &SocketAddr) -> io::Result<()> {
     let addr = match *addr {
@@ -87,5 +84,6 @@ fn bind_multicast(socket: &Socket, addr: &SocketAddr) -> io::Result<()> {
             addr.port(),
         ),
     };
+    tracing::debug!("bind_multicast to address : {:?}", &addr);
     socket.bind(&socket2::SockAddr::from(addr))
 }

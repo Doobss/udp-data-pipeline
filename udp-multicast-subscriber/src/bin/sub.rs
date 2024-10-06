@@ -1,11 +1,10 @@
-use udp_data_pipeline::logging;
-use udp_data_pipeline::socket;
+use udp_data_pipeline::{logging, socket, MULTICAST_ADDR};
+
 use udp_multicast_subscriber::SubscriberResult;
 
 use std::net::{Ipv4Addr, SocketAddr};
 
-const MULTICAST_ADDR: Ipv4Addr = Ipv4Addr::new(224, 0, 0, 1);
-const MULTICAST_PORT: u16 = 7644;
+const MULTICAST_PORT: u16 = 1900;
 
 /// Networking options.
 #[derive(argh::FromArgs)]
@@ -29,17 +28,32 @@ async fn main() -> SubscriberResult<()> {
     tracing::info!("joining multicast at address: {:?}", &multicast_address);
     let subscriber_socket = socket::multicast::new_subscriber(multicast_address)?;
 
-    let subscribed_socket = tokio::net::UdpSocket::from_std(subscriber_socket)?;
+    // let subscriber_socket = tokio::net::UdpSocket::from_std(subscriber_socket)?;
     let mut buffer = [0u8; 1028];
+    subscriber_socket.set_nonblocking(false)?;
 
     loop {
-        let (len, address) = subscribed_socket.recv_from(&mut buffer).await?;
-        let data = &buffer[..len];
-        let response = String::from_utf8_lossy(data);
+        match subscriber_socket.recv_from(&mut buffer) {
+            Ok((len, address)) => {
+                let data = &buffer[..len];
+                let response = String::from_utf8_lossy(data);
 
-        tracing::info!(
-            "Recieved bytes.len :{len} response: {response} from address: {:?}",
-            &address
-        );
+                tracing::info!(
+                    "Recieved bytes.len :{len} response: {response} from address: {:?}",
+                    &address
+                );
+            }
+            Err(_error) => {
+                // tracing::debug!("subscriber_socket.recv_from error: {:?}", error)
+            }
+        }
+        // let (len, address) = subscriber_socket.recv_from(&mut buffer);
+        // let data = &buffer[..len];
+        // let response = String::from_utf8_lossy(data);
+
+        // tracing::info!(
+        //     "Recieved bytes.len :{len} response: {response} from address: {:?}",
+        //     &address
+        // );
     }
 }
