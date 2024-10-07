@@ -20,12 +20,16 @@ readme = "README.md"
 
 [workspace.dependencies]
 argh = { version = "0.1.12" }
+chrono = { version = "0.4.38" }
 thiserror = { version = "1.0.64" }
 tokio = { version = "1", features = ["full"] }
 tracing = { version = "0.1.40" }
 tracing-subscriber = { version = "0.3.18", features = ["env-filter"] }
+serde = { version = "1.0.210" }
+serde_json = { version = "1.0.128" }
 socket2 = { version = "0.5.7" }
 udp-data-pipeline = { path = "./udp-data-pipeline-core", package = "udp-data-pipeline-core" }
 udp-multicast-publisher = { path = "./udp-multicast-publisher" }
 udp-multicast-subscriber = { path = "./udp-multicast-subscriber" }
 openssl = { version = "*", features = ["vendored"] }
+uuid = { version = "1.10.0", features = ["v4"] }

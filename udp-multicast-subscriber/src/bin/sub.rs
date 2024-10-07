@@ -1,6 +1,10 @@
-use udp_data_pipeline::{logging, socket, MULTICAST_ADDR};
+use udp_data_pipeline::{
+    logging,
+    messages::{self, FromBytes},
+    MULTICAST_ADDR,
+};
 
-use udp_multicast_subscriber::SubscriberResult;
+use udp_multicast_subscriber::{ABSubscriber, SubscriberResult};
 
 use std::net::{Ipv4Addr, SocketAddr};
 
@@ -26,34 +30,24 @@ async fn main() -> SubscriberResult<()> {
     let multicast_address = SocketAddr::new(std::net::IpAddr::V4(address), port);
 
     tracing::info!("joining multicast at address: {:?}", &multicast_address);
-    let subscriber_socket = socket::multicast::new_subscriber(multicast_address)?;
-
-    // let subscriber_socket = tokio::net::UdpSocket::from_std(subscriber_socket)?;
+    let ABSubscriber { socket_a } = ABSubscriber::new(multicast_address)?;
     let mut buffer = [0u8; 1028];
-    subscriber_socket.set_nonblocking(false)?;
 
     loop {
-        match subscriber_socket.recv_from(&mut buffer) {
-            Ok((len, address)) => {
-                let data = &buffer[..len];
-                let response = String::from_utf8_lossy(data);
-
-                tracing::info!(
-                    "Recieved bytes.len :{len} response: {response} from address: {:?}",
-                    &address
-                );
+        let (len, address) = socket_a.recv_from(&mut buffer).await?;
+        let data = &buffer[..len];
+        let response = match messages::SimpleMessage::from_bytes(data) {
+            Ok(parsed) => Some(parsed),
+            Err(error) => {
+                tracing::error!("Error parsing message: {error}");
+                None
             }
-            Err(_error) => {
-                // tracing::debug!("subscriber_socket.recv_from error: {:?}", error)
-            }
-        }
-        // let (len, address) = subscriber_socket.recv_from(&mut buffer);
-        // let data = &buffer[..len];
-        // let response = String::from_utf8_lossy(data);
+        };
 
-        // tracing::info!(
-        //     "Recieved bytes.len :{len} response: {response} from address: {:?}",
-        //     &address
-        // );
+        tracing::info!(
+            "Recieved bytes.len {len} from address: {:?} response: {:?}",
+            &address,
+            &response
+        );
     }
 }

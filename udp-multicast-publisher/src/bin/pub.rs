@@ -1,4 +1,8 @@
-use udp_data_pipeline::{logging, socket, MULTICAST_ADDR};
+use udp_data_pipeline::{
+    logging,
+    messages::{self, ToString},
+    socket, MULTICAST_ADDR,
+};
 use udp_multicast_publisher::PublisherResult;
 
 use std::net::{Ipv4Addr, SocketAddr};
@@ -28,17 +32,16 @@ async fn main() -> PublisherResult<()> {
         &multicast_address,
         &address.is_multicast()
     );
-    let publisher_socket = socket::multicast::new_publisher(&multicast_address)?;
+    let publisher_socket =
+        tokio::net::UdpSocket::from_std(socket::multicast::new_publisher(&multicast_address)?)?;
 
-    let publisher_socket = tokio::net::UdpSocket::from_std(publisher_socket)?;
-    // let buffer = [0; 1024];
-    let mut len = 18;
-    let message = b"Hello from publisher!";
     loop {
+        let message = messages::SimpleMessage::default();
+        let message = message.to_string()?;
+        let message = message.as_bytes();
+        let len = message.len();
         tracing::info!("sending {len} bytes to {:?}", multicast_address);
-        len = publisher_socket.send_to(message, multicast_address).await?;
+        _ = publisher_socket.send_to(message, multicast_address).await?;
         tokio::time::sleep(tokio::time::Duration::from_millis(1000)).await
     }
-
-    // Ok(())
 }
