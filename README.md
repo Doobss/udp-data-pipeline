@@ -23,6 +23,10 @@ example that worked for me
 echo "Hello, from bash" | nc -u -w1 239.255.255.250 1900
 ```
 
+List current sockets
+```bash
+netstat -tulpn
+```
 ---
 
 The address **239.255.255.250** using port **1900** is definitely not a good one to use but it was the first one I was able to cast through sucessfully. The biggest issue is I am receiving messages that are not form my publisher. 

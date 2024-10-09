@@ -12,7 +12,9 @@ pub fn new_socket(address: &SocketAddr) -> io::Result<Socket> {
     let socket = Socket::new(domain, Type::DGRAM, Some(Protocol::UDP))?;
 
     socket.set_read_timeout(Some(std::time::Duration::from_millis(100)))?;
-
+    socket.set_reuse_address(true)?;
+    // socket.set_multicast_all_v4(false)?;
+    // socket.set_multicast_all_v6(false)?;
     Ok(socket)
 }
 
@@ -21,19 +23,39 @@ pub fn new_subscriber(address: SocketAddr) -> io::Result<std::net::UdpSocket> {
     tracing::debug!("new_subscriber: ip_address: {:?}", &ip_address);
 
     let socket = new_socket(&address)?;
-
+    bind_multicast(&socket, &address)?;
+    let local_address = socket.local_addr()?;
+    if local_address.is_ipv4() {
+        tracing::debug!(
+            "new_subscriber: local_address: {:?}",
+            &local_address.as_socket_ipv4()
+        );
+    } else {
+        tracing::debug!(
+            "new_subscriber: local_address: {:?}",
+            &local_address.as_socket_ipv6()
+        );
+    }
     match ip_address {
         std::net::IpAddr::V4(ref mdns_v4) => {
-            tracing::debug!("new_subscriber: join_multicast_v4 mdns_v4: {:?}", &mdns_v4);
-            socket.join_multicast_v4(mdns_v4, &std::net::Ipv4Addr::UNSPECIFIED)?;
+            let interface = std::net::Ipv4Addr::UNSPECIFIED;
+            tracing::debug!(
+                "new_subscriber: join_multicast_v4 mdns_v4: {:?} on interface: {:?}",
+                &mdns_v4,
+                &interface
+            );
+            socket.join_multicast_v4(mdns_v4, &interface)?;
         }
         std::net::IpAddr::V6(ref mdns_v6) => {
-            tracing::debug!("new_subscriber: join_multicast_v6 mdns_v6: {:?}", &mdns_v6);
-            socket.join_multicast_v6(mdns_v6, 0)?;
+            let interface = 0;
+            tracing::debug!(
+                "new_subscriber: join_multicast_v6 mdns_v6: {:?} on interface: {interface}",
+                &mdns_v6
+            );
+            socket.join_multicast_v6(mdns_v6, interface)?;
             socket.set_only_v6(true)?;
         }
     };
-    bind_multicast(&socket, &address)?;
     Ok(socket.into())
 }
 
@@ -72,17 +94,15 @@ fn bind_multicast(socket: &Socket, addr: &SocketAddr) -> io::Result<()> {
     socket.bind(&socket2::SockAddr::from(addr))
 }
 
-/// On unix we bind to the multicast address, which causes multicast packets to be filtered
 #[cfg(unix)]
-fn bind_multicast(socket: &Socket, addr: &SocketAddr) -> io::Result<()> {
+fn bind_multicast(socket: &Socket, addr: &std::net::SocketAddr) -> io::Result<()> {
     let addr = match *addr {
-        SocketAddr::V4(addr) => {
-            SocketAddr::new(std::net::Ipv4Addr::new(0, 0, 0, 0).into(), addr.port())
+        std::net::SocketAddr::V4(addr) => {
+            std::net::SocketAddr::new(std::net::Ipv4Addr::UNSPECIFIED.into(), addr.port())
         }
-        SocketAddr::V6(addr) => SocketAddr::new(
-            std::net::Ipv6Addr::new(0, 0, 0, 0, 0, 0, 0, 0).into(),
-            addr.port(),
-        ),
+        std::net::SocketAddr::V6(addr) => {
+            std::net::SocketAddr::new(std::net::Ipv6Addr::UNSPECIFIED.into(), addr.port())
+        }
     };
     tracing::debug!("bind_multicast to address : {:?}", &addr);
     socket.bind(&socket2::SockAddr::from(addr))
