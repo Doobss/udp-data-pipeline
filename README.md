@@ -7,7 +7,7 @@ Links I used
 - [Understanding Ip Multicasting](http://www.steves-internet-guide.com/introduction-multicasting/)
 - [Udp Multicast setup](https://lcm-proj.github.io/lcm/content/multicast-setup.html)
 - [configuring multi cast](https://www.reddit.com/r/networking/comments/ouarlx/configuring_multicast/)
-
+- [Udp multicast surprises](https://rg3.name/201504241907.html)
 ---
 
 To observe local multicast (I used to confirm publisher was sending messages)
