@@ -35,8 +35,9 @@ async fn main() -> PublisherResult<()> {
     let publisher_socket =
         tokio::net::UdpSocket::from_std(socket::multicast::new_publisher(&multicast_address)?)?;
 
+    let mut message_producer = messages::MessageProducer::<messages::SimpleMessage>::default();
     loop {
-        let message = messages::SimpleMessage::default();
+        let message = message_producer.next_message();
         let message = message.to_string()?;
         let message = message.as_bytes();
         let len = message.len();
