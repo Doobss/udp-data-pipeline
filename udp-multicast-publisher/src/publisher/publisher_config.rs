@@ -12,4 +12,7 @@ pub struct PublisherConfig {
     /// specific port to bind the socket to
     #[argh(option, short = 'p', default = "MULTICAST_PORT")]
     pub port: u16,
+    /// delay in milliseconds between published messages
+    #[argh(option, short = 'd', default = "1000")]
+    pub delay: u64,
 }

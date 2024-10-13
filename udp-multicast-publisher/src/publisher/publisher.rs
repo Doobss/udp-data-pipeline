@@ -1,39 +1,47 @@
-use udp_data_pipeline::{messages, socket};
+use udp_data_pipeline::messages::{self, ToString};
 
-use crate::PublisherResult;
+use crate::{publisher, PublisherResult};
 
 use super::PublisherConfig;
 
 pub struct Publisher<T>
 where
-    T: messages::PublishedMessage + Clone + Send + Sync,
+    T: messages::PublishedMessage + Clone + Send + Sync + ToString + 'static,
 {
-    pub message_producer: std::sync::Arc<messages::MessageProducer<T>>,
+    pub message_producer: std::sync::Arc<tokio::sync::Mutex<messages::MessageProducer<T>>>,
     pub config: PublisherConfig,
 }
 
 impl<T> Publisher<T>
 where
-    T: messages::PublishedMessage + Clone + Send + Sync,
+    T: messages::PublishedMessage + Clone + Send + Sync + ToString + 'static,
 {
-    pub fn from_config(config: PublisherConfig) -> PublisherResult<Self> {
-        // let PublisherConfig { address, port } = config;
-        // let multicast_address = std::net::SocketAddr::new(std::net::IpAddr::V4(address), port);
-        // tracing::info!(
-        //     "Creating new multicast publisher at {:?} is multicast: {}",
-        //     &multicast_address,
-        //     &address.is_multicast()
-        // );
-        // let publisher_socket =
-        //     tokio::net::UdpSocket::from_std(socket::multicast::new_publisher(&multicast_address)?)?;
-
-        let message_producer = std::sync::Arc::new(messages::MessageProducer::<T>::default());
-
-        Ok(Self {
+    pub fn from_config(config: PublisherConfig) -> Self {
+        let message_producer = std::sync::Arc::new(tokio::sync::Mutex::new(
+            messages::MessageProducer::<T>::default(),
+        ));
+        Self {
             message_producer,
             config,
-        })
+        }
     }
 
-    // pub fn
+    pub async fn run(self) -> PublisherResult<()> {
+        let Self {
+            message_producer,
+            config,
+        } = self;
+        let multicast_publish_task =
+            publisher::tasks::socket::task(&config, message_producer.clone()).await?;
+        let server_task = publisher::tasks::server::task(&config, message_producer).await?;
+        match tokio::try_join!(multicast_publish_task, server_task) {
+            Ok(_res) => {
+                tracing::info!("Publisher finished")
+            }
+            Err(error) => {
+                tracing::error!("Error running publisher: {:?}", error)
+            }
+        }
+        Ok(())
+    }
 }
