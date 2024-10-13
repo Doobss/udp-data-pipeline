@@ -2,14 +2,14 @@ use super::PublishedMessage;
 
 pub struct MessageProducer<T>
 where
-    T: PublishedMessage + Clone,
+    T: PublishedMessage + Clone + Send + Sync,
 {
     produced_messages: Vec<T>,
 }
 
 impl<T> MessageProducer<T>
 where
-    T: PublishedMessage + Clone,
+    T: PublishedMessage + Clone + Send + Sync,
 {
     pub fn next_message(&mut self) -> T {
         let next_index = self.produced_messages.len() as i64;
@@ -25,7 +25,7 @@ where
 
 impl<T> Default for MessageProducer<T>
 where
-    T: PublishedMessage + Clone,
+    T: PublishedMessage + Clone + Send + Sync,
 {
     fn default() -> Self {
         Self {
